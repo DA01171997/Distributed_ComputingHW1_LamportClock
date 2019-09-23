@@ -4,6 +4,7 @@
 #include <vector>
 #include <stdexcept>
 #include <regex>
+#include <unordered_map>
 
 struct Event 
 {
@@ -60,41 +61,57 @@ struct Processor
 struct LC_Calculator
 {
 	size_t m_processor_cursor = 0;
+	size_t m_num_process, m_num_message;
 	std::vector<size_t> m_event_cursor;
 	std::vector<Processor>& m_processors;
-	size_t n_num_process, n_num_message;
-	LC_Calculator(std::vector<Processor> & processors, size_t num_process, size_t num_message) : m_processors(processors), n_num_process(num_process), n_num_message(num_message) 
+	std::unordered_map<std::string, size_t> m_unordered_map;
+	
+	LC_Calculator(std::vector<Processor> & processors, size_t num_process, size_t num_message)	:	m_processors(processors),
+																									m_num_process(num_process),
+																									m_num_message(num_message) 
 	{
-		m_event_cursor.resize(n_num_message);
+		m_event_cursor.resize(m_num_message);
 	}
 	void calculate() {
 		bool done = false;
 		while (!done) 
 		{
-			for (size_t i = m_event_cursor[m_processor_cursor]; i < n_num_message; i++)
+			for (size_t i = m_event_cursor[m_processor_cursor];  i < m_num_message; i++)
 			{
 				Event * event_pointer = &(m_processors[m_processor_cursor].m_events[i]);
-				if ((i==0) && ((event_pointer->isInternal()) || (event_pointer->isSend())))
+				if (event_pointer->isNULL()) 
 				{
+					break;
+				}
+				else if ((i==0) && ((event_pointer->isInternal()) || (event_pointer->isSend())))
+				{
+					if (event_pointer->isSend()) {
+
+					}
 					event_pointer->m_LC = 1;
 				}
+
 			}
-			done = true;
+			m_processor_cursor = (m_processor_cursor + 1) % m_num_process;
+			if (m_processor_cursor == 2) {
+				done = true;
+			}
 		}
 	}
 };
 
 struct Program
 {
-	size_t n_num_process, n_num_message;
+	size_t m_num_process, m_num_message;
 	std::vector<Processor> m_processors;
-	Program(size_t num_process,size_t num_message) : n_num_process(num_process), n_num_message(num_message)
+	Program(size_t num_process,size_t num_message)	:	m_num_process(num_process), 
+														m_num_message(num_message)
 	{
 		m_processors.resize(num_process);
 	}
 	void calculateLC() 
 	{
-		LC_Calculator lc_calculator(m_processors, n_num_process, n_num_message);
+		LC_Calculator lc_calculator(m_processors, m_num_process, m_num_message);
 		lc_calculator.calculate();
 	}
 };
@@ -117,7 +134,7 @@ std::ostream& operator << (std::ostream& stream, const Processor& object)
 		}
 		stream << "\t";
 	}
-	stream << "LC\t";
+	stream << "----LC\t";
 	for (size_t i = 0; i < object.m_events.size(); i++)
 	{
 		stream << object.m_events[i].m_LC;
