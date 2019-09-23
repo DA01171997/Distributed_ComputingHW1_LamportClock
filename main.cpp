@@ -73,27 +73,72 @@ struct LC_Calculator
 		m_event_cursor.resize(m_num_message);
 	}
 	void calculate() {
+		size_t temp = 0;
 		bool done = false;
 		while (!done) 
 		{
 			for (size_t i = m_event_cursor[m_processor_cursor];  i < m_num_message; i++)
 			{
 				Event * event_pointer = &(m_processors[m_processor_cursor].m_events[i]);
+				std::unordered_map<std::string, size_t>::iterator iter;
+				std::string key;
 				if (event_pointer->isNULL()) 
 				{
-					break;
+					continue;
 				}
 				else if ((i==0) && ((event_pointer->isInternal()) || (event_pointer->isSend())))
 				{
-					if (event_pointer->isSend()) {
-
+					if (event_pointer->isSend()) 
+					{
+						key = event_pointer->m_type + std::to_string(event_pointer->m_order);
+						if (m_unordered_map.find(key) == m_unordered_map.end())
+						{
+							m_unordered_map.insert(std::make_pair(key, 1));
+						}
 					}
 					event_pointer->m_LC = 1;
 				}
-
+				else if ((i == 0) && (event_pointer->isReceive())) 
+				{
+					key = "s" + std::to_string(event_pointer->m_order);
+					iter = m_unordered_map.find(key);
+					if (iter != m_unordered_map.end()) {
+						event_pointer->m_LC = iter->second + 1;
+					}
+				}
+				else if ((i!=0) && ((event_pointer->isInternal()) || (event_pointer->isSend())))
+				{
+					size_t k = m_processors[m_processor_cursor].m_events[i - 1].m_LC;
+					key = event_pointer->m_type + std::to_string(event_pointer->m_order);
+					iter = m_unordered_map.find(key);
+					if (event_pointer->isSend())
+					{
+						if (iter == m_unordered_map.end())
+						{
+							m_unordered_map.insert(std::make_pair(key, k+1));
+						}
+						else
+						{
+							iter->second = k + 1;
+						}
+					}
+					event_pointer->m_LC = k + 1;
+				}
+				else if ((i != 0) && (event_pointer->isReceive()))
+				{
+					key = "s" + std::to_string(event_pointer->m_order);
+					iter = m_unordered_map.find(key);
+					if (iter != m_unordered_map.end()) 
+					{
+						size_t k = m_processors[m_processor_cursor].m_events[i - 1].m_LC;
+						k = (k > iter->second) ? k : iter->second;
+						event_pointer->m_LC = k + 1;
+					}
+				}
 			}
 			m_processor_cursor = (m_processor_cursor + 1) % m_num_process;
-			if (m_processor_cursor == 2) {
+			temp++;
+			if (temp > 30) {
 				done = true;
 			}
 		}
