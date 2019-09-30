@@ -180,12 +180,19 @@ struct LC_Calculator
 struct LC_Verifier
 {
 	struct Location {
-		size_t m_processor;
-		size_t m_message;
-		Location(size_t processor, size_t message) : m_processor(processor), m_message(message) {}
+		size_t m_processor_index;
+		size_t m_message_index;
+		std::map<size_t, size_t> m_map_location;
+		Location(size_t processor_index, size_t message_index) : 
+			m_processor_index(processor_index),
+			m_message_index(message_index)
+		{
+			m_map_location[processor_index] = message_index;
+		}
 		Location() {}
 	};
 	size_t m_num_process, m_num_message;
+	size_t number_to_process_counter = 0;
 	size_t m_processor_cursor = 0;
 	size_t m_send_counter = 1;
 	std::vector<size_t> m_event_cursor;
@@ -207,6 +214,10 @@ struct LC_Verifier
 
 	bool verify()
 	{
+		std::map<size_t, Location>::iterator iter;
+		size_t number_to_process = 0;
+		size_t receive_counter = 1;
+
 		for (size_t i = 0; i < m_num_process; i++)
 		{
 			size_t clock_value_counter = 1;
@@ -235,18 +246,23 @@ struct LC_Verifier
 						size_t k_value_element_before = m_processors[i].m_events[j - 1].m_LC;
 						k_value = (k_value > k_value_element_before) ? k_value : k_value_element_before;
 					}
-					m_map_receive[k_value] = Location(i,j);
+					iter = m_map_receive.find(k_value);
+					if (iter == m_map_receive.end())
+					{
+						m_map_receive[k_value] = Location(i, j);
+					}
+					else
+					{
+						iter->second.m_map_location[i] = j;
+					}
+					
 				}
 				clock_value_counter++;
 			}
 		}
-		std::map<size_t, Location>::iterator iter = m_map_receive.begin();
-		size_t receive_counter = 1;
-		size_t temp = 0;
-		size_t numbertoProcess = m_map_receive.size();
-		while (temp < numbertoProcess)
+		number_to_process += m_map_receive.size();
+		while (number_to_process_counter < number_to_process)
 		{	
-			
 			for (size_t i = 0; i < m_num_process; i++)
 			{
 				for (size_t j = 0; j < m_num_message; j++)
@@ -255,26 +271,27 @@ struct LC_Verifier
 					if (iter != m_map_receive.end()) {
 						if (iter->first == m_processors[i].m_events[j].m_LC)
 						{
-							if (iter->second.m_processor != i)
+							if (iter->second.m_processor_index != i)
 							{
-								std::cout << temp << " " << m_map_receive.size() << " " << i << " " << j << std::endl;
 								m_processors[i].m_events[j].m_type = "s";
 								m_processors[i].m_events[j].m_order = m_send_counter;
 								m_send_counter++;
 
-								m_processors[iter->second.m_processor].m_events[iter->second.m_message].m_order = receive_counter;
+								std::map<size_t, size_t>::iterator iter2 = iter->second.m_map_location.begin();
+								for (; iter2 != iter->second.m_map_location.end(); iter2++) 
+								{
+									m_processors[iter2->first].m_events[iter2->second].m_order = receive_counter;
+								}
 								receive_counter++;
 								m_map_receive.erase(iter->first);
-								
 							}
 						}
 					}
 
 				}
 			}
-			temp++;
+			number_to_process_counter++;
 		}
-
 		if (m_map_receive.empty()) {
 			return true;
 		}
@@ -314,14 +331,18 @@ struct Program
 		}
 	}
 
-	void verifyLC()
+	bool verifyLC()
 	{
 		LC_Verifier lc_verifier(m_processors, m_num_process, m_num_message);
 		if (!lc_verifier.verify()) {
 			std::cout << "The output is INCORRECT!" << std::endl;
+			return false;
 		}
-		else {
-			std::cout << "The output is: " << std::endl;
+		else 
+		{
+			std::cout << "i=Internal Event" << std::endl;
+			std::cout << "The possible output is: " << std::endl;
+			return true;
 		}
 	}
 
@@ -427,36 +448,68 @@ int main()
 	size_t num_message = 0;
 	std::string input;	
 	std::vector<std::string> vectS;
-	/*std::string input1 = "1 2 8 9";
-	std::string input2 = "1 6 7 0";
-	std::string input3 = "2 3 7 8";*/
-
-	/*std::string input1 = "1 2 8 9";
-	std::string input2 = "1 6 7 0";
-	std::string input3 = "2 3 4 5";*/
-
-	std::string input1 = "1 2 3 4";
-	std::string input2 = "1 3 4 5";
-	std::string input3 = "3 4 6 7";
-
-
-	vectS.push_back(input1);
-	vectS.push_back(input2);
-	vectS.push_back(input3);
-	Program program(3, 4);
+	print_usage_message();
+	std::cout << "Enter number of process:";
+	std::cin >> num_process;
+	std::cout << "Enter number of message:";
+	std::cin >> num_message;
+	std::cout << "Number of process-N=" << num_process << std::endl;
+	std::cout << "Number of message-M=" << num_message << std::endl;
+	std::cin.ignore();
+	Program program(num_process, num_message);
 	for (size_t i = 0; i < program.m_processors.size(); i++)
 	{
-		parser(vectS[i], program.m_processors[i].m_events, num_message, std::string("VERIFY"));
+		std::cout << "Enter Process Events For p" << i <<":";
+		std::getline(std::cin, input);
+		parser(input, program.m_processors[i].m_events, num_message, std::string("VERIFY")); 
 	}
-	std::cout << program << std::endl;
-	program.print_LC();
-	std::cout << std::endl;
-	program.verifyLC();
-	std::cout << std::endl;
-	std::cout << program << std::endl;
+	if (program.verifyLC())
+	{
+		std::cout << program << std::endl;
+	}
 	system("PAUSE");
 	return 0;
 }
+
+
+//int main()
+//{
+//	size_t num_process = 0;
+//	size_t num_message = 0;
+//	std::string input;
+//	std::vector<std::string> vectS;
+//	////good
+//	/*std::string input1 = "1 2 3 4";
+//	std::string input2 = "1 3 4 5";
+//	std::string input3 = "3 4 6 7";*/
+//	////good
+//	//std::string input1 = "1 2 8 9";
+//	//std::string input2 = "1 6 7 0";
+//	//std::string input3 = "3 4 5 6";
+//
+//	////good
+//	/*std::string input1 = "1 2 8 9";
+//	std::string input2 = "1 6 7 0";
+//	std::string input3 = "2 3 4 5";*/
+//	////good
+//	std::string input1 = "1 2 8 9";
+//	std::string input2 = "1 6 7 0";
+//	std::string input3 = "2 4 5 6";
+//
+//	vectS.push_back(input1);
+//	vectS.push_back(input2);
+//	vectS.push_back(input3);
+//	Program program(3, 4);
+//	for (size_t i = 0; i < program.m_processors.size(); i++)
+//	{
+//		parser(vectS[i], program.m_processors[i].m_events, num_message, std::string("VERIFY"));
+//	}
+//	program.print_LC();
+//	std::cout << std::endl;
+//	program.verifyLC();
+//	system("PAUSE");
+//	return 0;
+//}
 
 
 
