@@ -319,7 +319,7 @@ struct Program
 	//print function that used to print all LC value of each processor
 	void print_LC() const
 	{
-		std::cout << "The Lamport Logical clock of this program is: " << std::endl;
+		std::cout << "The Lamport Clock output of this program is: " << std::endl;
 		for (size_t i = 0; i < m_processors.size(); i++)
 		{
 			std::cout << "process " << i << ": ";
@@ -424,8 +424,12 @@ void print_usage_message()
 	std::cout << "***Please be careful when entering the input.                                     ***" << std::endl;
 	std::cout << "***Only one space between each process event and no space at the end of each line.***" << std::endl;
 	std::cout << "***Please end the input with NULL if no more event.                               ***" << std::endl;
+	std::cout << "***   option 1: Calculate LC                                                      ***" << std::endl;
+	std::cout << "***   option 2: Verify LC                                                         ***" << std::endl;
+	std::cout << "***   option 3: Quit                                                              ***" << std::endl;
+	std::cout << "***   Enter option:1                                                              ***" << std::endl;
 	std::cout << "***                                                                               ***" << std::endl;
-	std::cout << "***   Example:                                                                    ***" << std::endl;
+	std::cout << "***   Example:Calculate LC                                                        ***" << std::endl;
 	std::cout << "***   Enter number of process:3<enter>                                            ***" << std::endl;
 	std::cout << "***   Enter number of message:4<enter>                                            ***" << std::endl;
 	std::cout << "***   Number of process-N=3                                                       ***" << std::endl;
@@ -434,200 +438,85 @@ void print_usage_message()
 	std::cout << "***   Enter Process Events For p1:c<space>r2<space>s3<space>NULL<enter>           ***" << std::endl;
 	std::cout << "***   Enter Process Events For p2:r1<space>d<space>s2<space>e<enter>              ***" << std::endl;
 	std::cout << "***                                                                               ***" << std::endl;
+	std::cout << "***   Example:Verify    LC                                                        ***" << std::endl;
+	std::cout << "***   Enter number of process:3<enter>                                            ***" << std::endl;
+	std::cout << "***   Enter number of message:4<enter>                                            ***" << std::endl;
+	std::cout << "***   Number of process-N=3                                                       ***" << std::endl;
+	std::cout << "***   Number of message-M=4                                                       ***" << std::endl;
+	std::cout << "***   Enter Events LC For p0:1<space>2<space>r3<space>4<enter>                    ***" << std::endl;
+	std::cout << "***   Enter Events LC For p1:1<space>2<space>r3<space>4<enter>                    ***" << std::endl;
+	std::cout << "***   Enter Events LC For p2:1<space>2<space>r3<space>4<enter>                    ***" << std::endl;
+	std::cout << "***                                                                               ***" << std::endl;
 	std::cout << "***                                                                               ***" << std::endl;
 	std::cout << "***                                                                               ***" << std::endl;
 	std::cout << std::endl << std::endl;
 }
+void print_option()
+{
+	std::cout << std::endl;
+	std::cout << "option 1: Calculate LC" << std::endl;
+	std::cout << "option 2: Verify LC" << std::endl;
+	std::cout << "option 3: Quit" << std::endl;
+}
 
+//ask for user option
 //ask for user size of processor and event
 //ask for input from each processor event
-//calculate LC value for each event.
+//calculate LC value for each event
+//or verify LC value.
+
 int main()
 {
 	size_t num_process = 0;
 	size_t num_message = 0;
+	size_t option;
 	std::string input;	
+	
 	std::vector<std::string> vectS;
 	print_usage_message();
-	std::cout << "Enter number of process:";
-	std::cin >> num_process;
-	std::cout << "Enter number of message:";
-	std::cin >> num_message;
-	std::cout << "Number of process-N=" << num_process << std::endl;
-	std::cout << "Number of message-M=" << num_message << std::endl;
-	std::cin.ignore();
-	Program program(num_process, num_message);
-	for (size_t i = 0; i < program.m_processors.size(); i++)
+	while (true)
 	{
-		std::cout << "Enter Process Events For p" << i <<":";
-		std::getline(std::cin, input);
-		parser(input, program.m_processors[i].m_events, num_message, std::string("VERIFY")); 
-	}
-	if (program.verifyLC())
-	{
-		std::cout << program << std::endl;
+		print_option();
+		std::cout << "Enter option:";
+		std::cin >> option;
+		if (option == 3) 
+		{
+			break;
+		}
+		std::cout << "Enter number of process:";
+		std::cin >> num_process;
+		std::cout << "Enter number of message:";
+		std::cin >> num_message;
+		std::cout << "Number of process-N=" << num_process << std::endl;
+		std::cout << "Number of message-M=" << num_message << std::endl;
+		std::cin.ignore();
+		Program program(num_process, num_message);
+		if (option == 1)
+		{
+			for (size_t i = 0; i < program.m_processors.size(); i++)
+			{
+				std::cout << "Enter Process Events For p" << i << ":";
+				std::getline(std::cin, input);
+				parser(input, program.m_processors[i].m_events, num_message, std::string("LC"));
+			}
+			std::cout << program << std::endl;
+			program.calculateLC();
+			program.print_LC();
+		}
+		else if (option == 2)
+		{
+			for (size_t i = 0; i < program.m_processors.size(); i++)
+			{
+				std::cout << "Enter Events LC For p" << i << ":";
+				std::getline(std::cin, input);
+				parser(input, program.m_processors[i].m_events, num_message, std::string("VERIFY"));
+			}
+			if (program.verifyLC())
+			{
+				std::cout << program << std::endl;
+			}
+		}	
 	}
 	system("PAUSE");
 	return 0;
 }
-
-
-//int main()
-//{
-//	size_t num_process = 0;
-//	size_t num_message = 0;
-//	std::string input;
-//	std::vector<std::string> vectS;
-//	////good
-//	/*std::string input1 = "1 2 3 4";
-//	std::string input2 = "1 3 4 5";
-//	std::string input3 = "3 4 6 7";*/
-//	////good
-//	//std::string input1 = "1 2 8 9";
-//	//std::string input2 = "1 6 7 0";
-//	//std::string input3 = "3 4 5 6";
-//
-//	////good
-//	/*std::string input1 = "1 2 8 9";
-//	std::string input2 = "1 6 7 0";
-//	std::string input3 = "2 3 4 5";*/
-//	////good
-//	std::string input1 = "1 2 8 9";
-//	std::string input2 = "1 6 7 0";
-//	std::string input3 = "2 4 5 6";
-//
-//	vectS.push_back(input1);
-//	vectS.push_back(input2);
-//	vectS.push_back(input3);
-//	Program program(3, 4);
-//	for (size_t i = 0; i < program.m_processors.size(); i++)
-//	{
-//		parser(vectS[i], program.m_processors[i].m_events, num_message, std::string("VERIFY"));
-//	}
-//	program.print_LC();
-//	std::cout << std::endl;
-//	program.verifyLC();
-//	system("PAUSE");
-//	return 0;
-//}
-
-
-
-
-
-//int main()
-//{
-//	size_t num_process = 0;
-//	size_t num_message = 0;
-//	std::string input;
-//
-//	print_usage_message();
-//	std::cout << "Enter number of process:";
-//	std::cin >> num_process;
-//	std::cout << "Enter number of message:";
-//	std::cin >> num_message;
-//	std::cout << "Number of process-N=" << num_process << std::endl;
-//	std::cout << "Number of message-M=" << num_message << std::endl;
-//	std::cin.ignore();
-//	Program program(num_process, num_message);
-//	for (size_t i = 0; i < program.m_processors.size(); i++)
-//	{
-//		std::cout << "Enter Process Events For p" << i <<":";
-//		std::getline(std::cin, input);
-//		parser(input, program.m_processors[i].m_events, num_message, std::string("VERIFY")); 
-//	}
-//	std::cout << program << std::endl;
-//	//program.calculateLC();
-//	program.print_LC();
-//	system("PAUSE");
-//	return 0;
-//}
-
-
-
-
-// Calculate lc
-//int main()
-//{
-//	size_t num_process = 0;
-//	size_t num_message = 0;
-//	std::string input;
-//
-//	print_usage_message();
-//	std::cout << "Enter number of process:";
-//	std::cin >> num_process;
-//	std::cout << "Enter number of message:";
-//	std::cin >> num_message;
-//	std::cout << "Number of process-N=" << num_process << std::endl;
-//	std::cout << "Number of message-M=" << num_message << std::endl;
-//	std::cin.ignore();
-//	Program program(num_process, num_message);
-//	for (size_t i = 0; i < program.m_processors.size(); i++)
-//	{
-//
-//		std::cout << "Enter Process Events For p" << i << ":";
-//		std::getline(std::cin, input);
-//		parser(input, program.m_processors[i].m_events, num_message);
-//	}
-//	std::cout << program << std::endl;
-//	program.calculateLC();
-//	system("PAUSE");
-//	return 0;
-//}
-
-// //main for testing
-//int main()
-//{
-//
-//	size_t num_process = 0;
-//	size_t num_message = 0;
-//	std::string input;
-//
-//	print_usage_message();
-//	std::cout << "Enter number of process:";
-//	std::cin >> num_process;
-//	std::cout << "Enter number of message:";
-//	std::cin >> num_message;
-//	std::cout << "Number of process-N=" << num_process << std::endl;
-//	std::cout << "Number of message-M=" << num_message << std::endl;
-//
-//	/*
-//	cin.ignore();
-//	std::cout << "Enter Process Events: ";
-//	std::getline(std::cin, input);
-//	*/
-//	/*std::vector<std::string> vectS;
-//	std::string input1 = "a s1 r3 b s7";
-//	std::string input2 = "c r2 s3 NULL";
-//	std::string input3 = "r1 d s2 e";
-//	std::string input4 = "d s4 s5 NULL";
-//	std::string input5 = "r4 d r5 e r7 d";
-//
-//	vectS.push_back(input1);
-//	vectS.push_back(input2);
-//	vectS.push_back(input3);
-//	vectS.push_back(input4);
-//	vectS.push_back(input5);*/
-//
-//
-//	std::vector<std::string> vectS;
-//	std::string input1 = "a s1 s2 b";
-//	std::string input2 = "c r1 r2 s3";
-//	std::string input3 = "r1 d r3 e";
-//	vectS.push_back(input1);
-//	vectS.push_back(input2);
-//	vectS.push_back(input3);
-//
-//	Program program(num_process, num_message);
-//	for (size_t i = 0; i < program.m_processors.size(); i++)
-//	{
-//		parser(vectS[i], program.m_processors[i].m_events, num_message, std::string("LC"));
-//	}
-//	std::cout << program << std::endl;
-//	program.calculateLC();
-//	program.print_LC();
-//	system("PAUSE");
-//	return 0;
-//}
-//
-
