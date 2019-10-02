@@ -1,7 +1,9 @@
 /*
 Name: Duy Do
-CPSC474-01 Project 1
-10/01/2019
+Class: CPSC474-01 Project 1
+Date: 10/01/2019
+Github: https://github.com/DA01171997/Distributed_ComputingHW1_LamportClock.git
+Email: duy.ado@csu.fullerton.edu
 */
 
 
