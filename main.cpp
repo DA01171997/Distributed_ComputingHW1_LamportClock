@@ -75,7 +75,9 @@ struct LC_Calculator
 	std::vector<size_t> m_event_cursor;
 	std::vector<Processor>& m_processors;
 	std::unordered_map<std::string, size_t> m_unordered_map_send;
+	std::unordered_map<std::string, size_t> m_unordered_map_receive;
 	std::unordered_map<size_t, size_t> m_unordered_map_processor;
+
 
 	LC_Calculator(std::vector<Processor> & processors, size_t num_process, size_t num_message) : 
 		m_processors(processors),
@@ -92,8 +94,10 @@ struct LC_Calculator
 	//cycle through each processor and event to find the approciate LC value
 	//if even is a receive it will find the appropriate send event else it will 
 	//break out of the loop and cycle again til it could find it.
-	void calculate() {
+	bool calculate() {
 		//cycle through each processor of the program
+		size_t max_receive_timeout_value = m_num_message * m_num_message * m_num_process *m_num_process;
+		size_t receive_timeout_value = 0;
 		while (!m_unordered_map_processor.empty())
 		{
 			//cycle through each event of the processor
@@ -120,12 +124,15 @@ struct LC_Calculator
 				}
 				else if ((i == 0) && (event_pointer->isReceive()))
 				{
+					m_unordered_map_receive["r" + std::to_string(event_pointer->m_order)] = event_pointer->m_order;
 					key = "s" + std::to_string(event_pointer->m_order);
 					iter = m_unordered_map_send.find(key);
 					if (iter != m_unordered_map_send.end()) {
 						event_pointer->m_LC = iter->second + 1;
+						receive_timeout_value = 0;
 					}
 					else {
+						receive_timeout_value++;
 						break;
 					}
 				}
@@ -149,6 +156,7 @@ struct LC_Calculator
 				}
 				else if ((i != 0) && (event_pointer->isReceive()))
 				{
+					m_unordered_map_receive["r" + std::to_string(event_pointer->m_order)] = event_pointer->m_order;
 					key = "s" + std::to_string(event_pointer->m_order);
 					iter = m_unordered_map_send.find(key);
 					if (iter != m_unordered_map_send.end())
@@ -156,8 +164,10 @@ struct LC_Calculator
 						size_t k = m_processors[m_processor_cursor].m_events[i - 1].m_LC;
 						k = (k > iter->second) ? k : iter->second;
 						event_pointer->m_LC = k + 1;
+						receive_timeout_value = 0;
 					}
 					else {
+						receive_timeout_value++;
 						break;
 					}
 				}
@@ -174,11 +184,25 @@ struct LC_Calculator
 				}
 			}
 			m_processor_cursor = (m_processor_cursor + 1) % m_num_process;
+			if (receive_timeout_value > max_receive_timeout_value)
+			{
+				std::cout << "ERROR: MAXIMUM TIMEOUT REACHED: NO SEND FOUND FOR RECEIVE!" << std::endl;
+				return false;
+			}
 		}
+		if (m_unordered_map_send.size() > m_unordered_map_receive.size()) 
+		{
+			std::cout << "ERROR: SEND WITHOUT A RECEIVE!" << std::endl;
+			return false;
+		}
+		return true;
 	}
 };
+
+//simple verifier object that used to verify if LC value is valid
 struct LC_Verifier
 {
+	//simple location object used to hold the indexes of all receive with the same m_order value
 	struct Location {
 		size_t m_processor_index;
 		size_t m_message_index;
@@ -212,12 +236,20 @@ struct LC_Verifier
 		}
 	}
 
+	//first loop will preprocess the input and mark out which event is a receive
+	//find the k value of the receive which will  match with the m_order of the
+	//correspondence send, used the k value as the key, and value is an location struct
+	//that contains the indexes of all the receive type with the same m_order value for the map.
+	//Then it will attempt to go through each message and find the send event for that correspondence to all the mapped send value
+	//pop the send value if the correspondence value if found. If the mapped is empty at the end of the loop means all send
+	//was matched with receive, then return true for verfiy else false
 	bool verify()
 	{
 		std::map<size_t, Location>::iterator iter;
 		size_t number_to_process = 0;
 		size_t receive_counter = 1;
 
+		//preprocessing
 		for (size_t i = 0; i < m_num_process; i++)
 		{
 			size_t clock_value_counter = 1;
@@ -255,11 +287,13 @@ struct LC_Verifier
 					{
 						iter->second.m_map_location[i] = j;
 					}
-					
+
 				}
 				clock_value_counter++;
 			}
 		}
+
+		//attempt to find all send
 		number_to_process += m_map_receive.size();
 		while (number_to_process_counter < number_to_process)
 		{	
@@ -292,6 +326,7 @@ struct LC_Verifier
 			}
 			number_to_process_counter++;
 		}
+		//if empty mean all send was found and popped off return true; else it isn't bad
 		if (m_map_receive.empty()) {
 			return true;
 		}
@@ -311,10 +346,14 @@ struct Program
 		m_processors.resize(num_process);
 	}
 	//create an  LC calculator object then calculate all events LC values.
-	void calculateLC()
+	bool calculateLC()
 	{
 		LC_Calculator lc_calculator(m_processors, m_num_process, m_num_message);
-		lc_calculator.calculate();
+		if(lc_calculator.calculate())
+		{
+			return true;
+		}
+		return false;
 	}
 	//print function that used to print all LC value of each processor
 	void print_LC() const
@@ -338,12 +377,9 @@ struct Program
 			std::cout << "The output is INCORRECT!" << std::endl;
 			return false;
 		}
-		else 
-		{
-			std::cout << "i=Internal Event" << std::endl;
-			std::cout << "The possible output is: " << std::endl;
-			return true;
-		}
+		std::cout << "i=Internal Event" << std::endl;
+		std::cout << "The possible output is: " << std::endl;
+		return true;
 	}
 
 };
@@ -383,7 +419,8 @@ std::ostream& operator << (std::ostream& stream, const Program& object)
 //}
 
 //parser function that will parse out spaces between user input
-//then insert the input into the given vector of event. 
+//then insert the input into the given vector of event.
+//used different constructor for Event with different type value
 void parser(std::string & input, std::vector<Event> & v, size_t num_message, std::string type)
 {
 	std::stringstream ss(input);
@@ -400,7 +437,6 @@ void parser(std::string & input, std::vector<Event> & v, size_t num_message, std
 			v.push_back(std::stoi(s));
 		}
 	}
-
 	if (v.size() < num_message)
 	{
 		if (type == "LC")
@@ -463,7 +499,9 @@ void print_option()
 //ask for user size of processor and event
 //ask for input from each processor event
 //calculate LC value for each event
-//or verify LC value.
+//print lc value if calculate is valid
+//or verify LC value
+//print out the messages if verify is valid
 
 int main()
 {
@@ -500,8 +538,10 @@ int main()
 				parser(input, program.m_processors[i].m_events, num_message, std::string("LC"));
 			}
 			std::cout << program << std::endl;
-			program.calculateLC();
-			program.print_LC();
+			if (program.calculateLC())
+			{
+				program.print_LC();
+			}
 		}
 		else if (option == 2)
 		{
