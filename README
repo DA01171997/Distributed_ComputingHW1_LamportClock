@@ -1,0 +1,48 @@
+Please compile with C++11 and up
+    g++ main.cpp -o main -std=c++11
+
+        Algorithm Calculate
+Problem: You are given a number N of no more than 5 processes and a matrix of N rows and M columns where each element of the matrix is a string. Each row represents the sequence of events at a process: row 0 is the sequence of events at process p0, row 1 is the sequence of events at process p1, etc.. M represents the maximum number of events at a process and you can assume that M is less than 25. The number of processes N is not fixed but you can assume that is less than 6 and greater than 1, and will be given as input to your algorithm. You can assume that there are at most 9 send events.
+Each event is either:
+- internal, case in which the string associated with it is a single character, a letter from the English alphabet other than ‘s’ and ‘r’
+- send, case in which the string associated with it is a two-character string, the first character is ‘s’ followed by a digit in the range 1-9.
+- receive, case in which the string associated with it is a two-character string, the first character is ‘r’ followed by a digit in the range 1-9.
+- null if the process is done executing, case in which the string associated with it is the NULL string
+Your algorithm needs to calculate the LC-value for each of the events. So the output will be a NxM matrix with positive integer values. If a process has less than M events, the rest of the entries in the matrix until the column M will be filled with 0.
+
+For the example considered in class and presented above, the input to the algorithm is N=3, M=4, and the matrix of events is:
+a    s1    r3    b
+c    r2    s3   NULL
+r1   d    s2    e
+
+The output is:
+1    2    8    9
+1    6    7    0
+3    4    5    6
+
+        Algorithm Verify
+Problem: You are given a number N of no more than 5 processes, a positive value M and a matrix of N rows and M columns where each element of the matrix is a positive integer in the range 0..24.  Each row represents the sequence of LV-values of events at a process: row 0 is the sequence of LC-values, one value for each event at process p0, row 1 is the sequence of LC-values, one value for each event at process p1, etc.. M represents the maximum number of events at a process and you can assume that M is less than 25. If a process has less than M events, the rest of the entries in the matrix until the column M will be filled with 0. The number of processes N is not fixed but you can assume that is less than 6 and greater than 1, and will be given as input to your algorithm. You can assume that there are at most 9 send events. Given such an input, you need to identify a correct sequence of events at each process or output the message “INCORRECT” if there is an incorrect execution, i.e. at least one process has an incorrect execution.
+
+Example 1: For the example considered in class and presented above, the input to the algorithm is N=3, M=4, and the matrix of LC-values is
+1    2    8    9
+1    6    7    0
+3    4    5    6
+The output is the matrix of events:
+a    s1    r3    b
+c    r2    s3   NULL
+r1   d    s2    e
+
+Example 2: Consider the input to be N=3, M=4 and the matrix of LC-values is
+1    2    8    9
+1    6    7    0
+2    3    4    5
+The output is:
+s1   b    r3    e
+a     r2   s3  NULL
+r1   c     d    s2
+
+Example 3: Consider the input to be N=3, M=4 and the matrix of LC-values is
+1    2    8    9
+1    6    7    0
+2    4    5    6
+The output is “INCORRECT”.

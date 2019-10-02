@@ -1,3 +1,11 @@
+/*
+Name: Duy Do
+CPSC474-01 Project 1
+10/01/2019
+*/
+
+
+
 #include <iostream>
 #include <string>
 #include <sstream>

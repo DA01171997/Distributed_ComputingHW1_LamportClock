@@ -1,0 +1,172 @@
+***Please be careful when entering the input.                                     ***
+***Only one space between each process event and no space at the end of each line.***
+***Please end the input with NULL if no more event.                               ***
+***   option 1: Calculate LC                                                      ***
+***   option 2: Verify LC                                                         ***
+***   option 3: Quit                                                              ***
+***   Enter option:1                                                              ***
+***                                                                               ***
+***   Example:Calculate LC                                                        ***
+***   Enter number of process:3<enter>                                            ***
+***   Enter number of message:4<enter>                                            ***
+***   Number of process-N=3                                                       ***
+***   Number of message-M=4                                                       ***
+***   Enter Process Events For p0:a<space>s1<space>r3<space>b<enter>              ***
+***   Enter Process Events For p1:c<space>r2<space>s3<space>NULL<enter>           ***
+***   Enter Process Events For p2:r1<space>d<space>s2<space>e<enter>              ***
+***                                                                               ***
+***   Example:Verify    LC                                                        ***
+***   Enter number of process:3<enter>                                            ***
+***   Enter number of message:4<enter>                                            ***
+***   Number of process-N=3                                                       ***
+***   Number of message-M=4                                                       ***
+***   Enter Events LC For p0:1<space>2<space>r3<space>4<enter>                    ***
+***   Enter Events LC For p1:1<space>2<space>r3<space>4<enter>                    ***
+***   Enter Events LC For p2:1<space>2<space>r3<space>4<enter>                    ***
+***                                                                               ***
+***                                                                               ***
+***                                                                               ***
+
+-------TESTING CALCULATE------
+
+option 1: Calculate LC
+option 2: Verify LC
+option 3: Quit
+Enter option:1
+Enter number of process:3
+Enter number of message:4
+Number of process-N=3
+Number of message-M=4
+Enter Process Events For p0:a s1 r3 b
+Enter Process Events For p1:c r2 s3 NULL
+Enter Process Events For p2:r1 d s2 e
+process 0: a    s1      r3      b
+process 1: c    r2      s3      NULL
+process 2: r1   d       s2      e
+
+The Lamport Clock output of this program is:
+process 0: 1    2       8       9
+process 1: 1    6       7       0
+process 2: 3    4       5       6
+
+option 1: Calculate LC
+option 2: Verify LC
+option 3: Quit
+Enter option:1
+Enter number of process:3
+Enter number of message:4
+Number of process-N=3
+Number of message-M=4
+Enter Process Events For p0:a s1 s2 b
+Enter Process Events For p1:c r1 r2 s3
+Enter Process Events For p2:r1 d r3 e
+process 0: a    s1      s2      b
+process 1: c    r1      r2      s3
+process 2: r1   d       r3      e
+
+The Lamport Clock output of this program is:
+process 0: 1    2       3       4
+process 1: 1    3       4       5
+process 2: 3    4       6       7
+
+option 1: Calculate LC
+option 2: Verify LC
+option 3: Quit
+Enter option:1
+Enter number of process:3
+Enter number of message:4
+Number of process-N=3
+Number of message-M=4
+Enter Process Events For p0:a a a a
+Enter Process Events For p1:r1 a a a
+Enter Process Events For p2:a a a a
+process 0: a    a       a       a
+process 1: r1   a       a       a
+process 2: a    a       a       a
+
+ERROR: MAXIMUM TIMEOUT REACHED: NO SEND FOUND FOR RECEIVE!
+
+option 1: Calculate LC
+option 2: Verify LC
+option 3: Quit
+Enter option:1
+Enter number of process:3
+Enter number of message:4
+Number of process-N=3
+Number of message-M=4
+Enter Process Events For p0:a a r1 a
+Enter Process Events For p1:s1 a a a
+Enter Process Events For p2:a a r2 a
+process 0: a    a       r1      a
+process 1: s1   a       a       a
+process 2: a    a       r2      a
+
+ERROR: MAXIMUM TIMEOUT REACHED: NO SEND FOUND FOR RECEIVE!
+
+option 1: Calculate LC
+option 2: Verify LC
+option 3: Quit
+Enter option:1
+Enter number of process:3
+Enter number of message:4
+Number of process-N=3
+Number of message-M=4
+Enter Process Events For p0:a a s1 a
+Enter Process Events For p1:s2 a r1 a
+Enter Process Events For p2:b b b b
+process 0: a    a       s1      a
+process 1: s2   a       r1      a
+process 2: b    b       b       b
+
+ERROR: SEND WITHOUT A RECEIVE!
+
+-------TESTING VERIFY-------
+
+option 1: Calculate LC
+option 2: Verify LC
+option 3: Quit
+Enter option:2
+Enter number of process:3
+Enter number of message:4
+Number of process-N=3
+Number of message-M=4
+Enter Events LC For p0:1 2 8 9
+Enter Events LC For p1:1 6 7 0
+Enter Events LC For p2:3 4 5 6
+i=Internal Event
+The possible output is:
+process 0: i    s1      r3      i
+process 1: i    r2      s3      NULL
+process 2: r1   i       s2      i
+
+
+option 1: Calculate LC
+option 2: Verify LC
+option 3: Quit
+Enter option:2
+Enter number of process:3
+Enter number of message:4
+Number of process-N=3
+Number of message-M=4
+Enter Events LC For p0:1 2 8 9
+Enter Events LC For p1:1 6 7 0
+Enter Events LC For p2:2 3 4 5
+i=Internal Event
+The possible output is:
+process 0: s1   i       r3      i
+process 1: i    r2      s3      NULL
+process 2: r1   i       i       s2
+
+
+option 1: Calculate LC
+option 2: Verify LC
+option 3: Quit
+Enter option:2
+Enter number of process:3
+Enter number of message:4
+Number of process-N=3
+Number of message-M=4
+Enter Events LC For p0:1 2 8 9
+Enter Events LC For p1:1 6 7 0
+Enter Events LC For p2:2 4 5 6
+The output is INCORRECT!

@@ -76,6 +76,7 @@ class LC_Calculator:
 						key = "s" + event.m_order
 						if key is not in m_MAP_send_event:
 							insert key:event.m_LC=1 into m_MAP_send_event
+						sendcounter++
 					event.m_LC = 1
 					
 				elif event is first and event isReceive():
@@ -83,6 +84,7 @@ class LC_Calculator:
 					if key is in m_MAP_send_event:
 						event.m_LC= key.value +1
 					else:
+						keep timeout counter for receive++
 						break out of for loop and move on to next process
 						
 				elif event is not first and event isInternal or event isSend:
@@ -93,6 +95,7 @@ class LC_Calculator:
 							insert key:event.m_LC=k_value+1 into m_MAP_send_event
 						else:
 							update key.value =k_value+1 
+						sendcounter++
 					event.m_LC = k_value + 1
 					
 				elif even is not first and even isReceive:
@@ -102,6 +105,7 @@ class LC_Calculator:
 						k_value = k_value if k_value > key.value else k_value = key.value
 						event.m_LC = k_value + 1
 					else:
+						keep timeout counter for receive++
 						break out of for loop and move on to next process
 				#
 				#Update m_VECTOR_event_cursor[m_processor_cursor] to i, where event stopped for that processor
@@ -118,15 +122,60 @@ class LC_Calculator:
 			#cycle the cursor so that it cycle through the vector of processors
 			m_processor_cursor =  (m_processor_cursor+1) % n
 			
+		#couldn't find the matching receive for send
+		if timeout counter for receive > timeout value:
+			return false
+		#too many send
+		if sendcounter is > receive:
+			return false
+		return true
+			
+class LC_Verifier:
+	location object
+	receive = {}
+	def verify():
+		#first preprocess by looping through and determine which event is a receive
+		#save those receive event, and saved those receive event with the increase order
+		#of the k value to the dictionary
+		for events in program:
+			receive[k-value] = preprocess(event)
+			
+		#loop through the event again to find event where LC value is equal to the k-value
+		#update that event type to receive and remove the k value from the dictionary
+		for k-value in receive:
+			for event in program:
+				if events.m_LC = k-value
+					update event.m_type = send
+					remove k-value from receive
+		
+		#if all the receive is found then receive dictionary is empty
+		#else meaning it failed to find corresponding send event 
+		#mean the sequence of input is invalid.
+		if receive.empty:
+			return True
+		return False
+					
+			
+		
+#get user option
 def main:
-	
 	n = number of processor = input("how many processor?")
 	m = number of events = input("how many event is each processor?")
 	Program progam(n,m)
 	for processor in range(n):
 		events = input("what is sequence of event per processor")
 		program.m_VECTOR_Processors.m_Vector_Events= events
-	progam.calculateLC()
+	
+	while(True):
+		print("option1 = calculate")
+		print("option2 = verify")
+		option = input("which option?")
+		if option =="1":
+			progam.calculateLC()
+		elif option =="2":
+			program.verify()
+		else:
+			break
 	
 	
  
